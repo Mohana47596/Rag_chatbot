@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+langchain
+pypdf
+faiss-cpu
+sentence-transformers
+langchain-community
+python-multipart
+PyPDF2
+transformers
+torch
+Pillow
+openai-whisper
