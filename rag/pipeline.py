@@ -31,15 +31,13 @@ def load_models():
 
     _llm = hf_pipeline(
         "text2text-generation",
-        model="google/flan-t5-large",
+        model="google/flan-t5-small",
         max_new_tokens=300,
         do_sample=False,
         temperature=0.0
     )
 
-    if _reranker is None:
-        print("Loading reranker model...")
-        _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    _reranker = None
 
 
 # ==============================
@@ -79,26 +77,13 @@ def retrieve(query, top_k=3, initial_k=8, max_chars=3000):
     candidate_docs = [_documents[i] for i in initial_indices]
 
     # Rerank
-    pairs = [[query, doc] for doc in candidate_docs]
-    rerank_scores = _reranker.predict(pairs)
-
-    reranked_indices = np.argsort(rerank_scores)[-top_k:][::-1]
+    reranked_indices = initial_indices[:top_k]
 
     retrieved_docs = []
     retrieved_scores = []
     total_chars = 0
 
-    for idx in reranked_indices:
-        doc = candidate_docs[idx]
-
-        if total_chars + len(doc) > max_chars:
-            continue
-
-        retrieved_docs.append(doc)
-        retrieved_scores.append(float(rerank_scores[idx]))
-        total_chars += len(doc)
-
-    return retrieved_docs, retrieved_scores
+    
 
 
 # ==============================
