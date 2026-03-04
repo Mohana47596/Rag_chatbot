@@ -20,5 +20,5 @@ app.add_middleware(
 # Routers
 app.include_router(upload_router)
 app.include_router(chat_router)
-app.include_router(image_router)
-app.include_router(audio_router)
+#app.include_router(image_router)
+#app.include_router(audio_router)
