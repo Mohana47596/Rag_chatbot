@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers.chat import router as chat_router
 from routers.upload import router as upload_router
-from routers.image import router as image_router
-from routers.audio import router as audio_router
+#from routers.image import router as image_router
+#from routers.audio import router as audio_router
 
 app = FastAPI()
 
