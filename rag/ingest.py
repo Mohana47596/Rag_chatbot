@@ -2,7 +2,7 @@
 
 import os
 import pickle
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from PyPDF2 import PdfReader
 
 VECTOR_PATH = "rag/vector_store/chunks.pkl"
