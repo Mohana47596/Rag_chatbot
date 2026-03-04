@@ -3,7 +3,7 @@ import pickle
 from fastapi import APIRouter, UploadFile, File
 from sentence_transformers import SentenceTransformer
 import pdfplumber
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 router = APIRouter()
 
