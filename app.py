@@ -7,7 +7,9 @@ from routers.upload import router as upload_router
 #from routers.audio import router as audio_router
 
 app = FastAPI()
-
+@app.get("/")
+def home():
+    return {"message": "RAG Chatbot API is running"}
 # ✅ ADD THIS CORS SECTION
 app.add_middleware(
     CORSMiddleware,
