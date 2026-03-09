@@ -13,7 +13,7 @@ def home():
 # ✅ ADD THIS CORS SECTION
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # allow all (for development)
+    allow_origins=["*"],  # allow all (for development)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
