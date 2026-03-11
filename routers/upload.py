@@ -13,6 +13,8 @@ VECTOR_PATH = "rag/vector_store.pkl"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs("rag", exist_ok=True)
 
+# Load model only once (important)
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # ==============================
 # PDF TEXT EXTRACTION
@@ -22,7 +24,7 @@ def extract_text_from_pdf(pdf_path):
     full_text = ""
 
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        for page in pdf.pages[:20]:  # limit pages to avoid memory crash
             text = page.extract_text()
             if text:
                 full_text += text + "\n"
@@ -36,9 +38,10 @@ def extract_text_from_pdf(pdf_path):
 
 def chunk_text(text):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100
+        chunk_size=300,
+        chunk_overlap=50
     )
+
     return splitter.split_text(text)
 
 
@@ -54,14 +57,13 @@ async def upload_pdf(file: UploadFile = File(...)):
     with open(file_path, "wb") as f:
         f.write(await file.read())
 
-    print("Extracting text from PDF...")
+    print("Extracting text...")
     text = extract_text_from_pdf(file_path)
 
-    print("Chunking text...")
+    print("Chunking...")
     chunks = chunk_text(text)
 
     print("Creating embeddings...")
-    model = SentenceTransformer("all-mpnet-base-v2")
     embeddings = model.encode(chunks)
 
     data = {
@@ -72,6 +74,6 @@ async def upload_pdf(file: UploadFile = File(...)):
     with open(VECTOR_PATH, "wb") as f:
         pickle.dump(data, f)
 
-    print("Vector store created successfully.")
+    print("Vector store saved.")
 
     return {"message": "PDF uploaded and vector store created successfully."}
