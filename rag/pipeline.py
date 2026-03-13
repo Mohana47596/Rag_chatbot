@@ -23,17 +23,16 @@ def load_models():
 
     if _embed_model is None:
         print("Loading embedding model...")
-        _embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+        _embed_model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
 
     if _llm is None:
         print("Loading LLM...")
         _llm = hf_pipeline(
             "text2text-generation",
-            model="google/flan-t5-small",
-            max_new_tokens=200,
-            do_sample=False,
-            temperature=0.0
-        )
+             model="google/flan-t5-base",
+             max_new_tokens=120,
+             do_sample=False
+)
 
 
 # ==============================
