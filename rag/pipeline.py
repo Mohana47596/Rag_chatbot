@@ -64,6 +64,12 @@ def load_vector_store():
 # ==============================
 def retrieve(query, top_k=3):
 
+    if _embeddings is None or _documents is None:
+        return [], []
+
+    if len(_embeddings) == 0:
+        return [], []
+
     query_embedding = _embed_model.encode([query])
 
     similarities = cosine_similarity(query_embedding, _embeddings)[0]
@@ -71,9 +77,9 @@ def retrieve(query, top_k=3):
     top_indices = similarities.argsort()[-top_k:][::-1]
 
     retrieved_docs = [_documents[i] for i in top_indices]
-    retrieved_scores = [similarities[i] for i in top_indices]
+    retrieved_scores = [float(similarities[i]) for i in top_indices]
 
-    return retrieved_docs, retrieved_scores
+    return retrieved_docs, retrieved_scores retrieved_docs, retrieved_scores
 
 
 # ==============================
@@ -238,31 +244,29 @@ Answer:
 # ==============================
 def rag_answer(question: str):
 
-    load_models()
-    load_vector_store()
+    try:
+        load_models()
+        load_vector_store()
 
-    context_docs, scores = retrieve(question)
+        context_docs, scores = retrieve(question)
 
-    max_score = max(scores) if scores else 0
+        max_score = max(scores) if scores else 0
 
-    # NUMERIC MODE
-    if is_table_question(question):
+        # NUMERIC MODE
+        if is_table_question(question):
+            exact = extract_exact_numeric(context_docs, question)
+            if exact:
+                return {
+                    "question": question,
+                    "answer": exact,
+                    "mode": "Exact-Numeric"
+                }
 
-        exact = extract_exact_numeric(context_docs, question)
+        # ADVICE MODE
+        if is_advice_question(question):
 
-        if exact:
-            return {
-                "question": question,
-                "answer": exact,
-                "mode": "Exact-Numeric"
-            }
-
-    # ADVICE MODE
-    if is_advice_question(question):
-
-        prompt = f"""
+            prompt = f"""
 You are a financial advisor.
-
 Give 5 short practical tips.
 
 Question:
@@ -271,20 +275,19 @@ Question:
 Answer:
 """
 
-        result = _llm(prompt)
+            result = _llm(prompt)
+            answer = remove_repetition(result[0]["generated_text"].strip())
 
-        answer = remove_repetition(result[0]["generated_text"].strip())
+            return {
+                "question": question,
+                "answer": answer,
+                "mode": "Advice"
+            }
 
-        return {
-            "question": question,
-            "answer": answer,
-            "mode": "Advice"
-        }
+        # GENERAL MODE
+        if max_score < 0.30:
 
-    # GENERAL LLM MODE
-    if max_score < 0.30:
-
-        prompt = f"""
+            prompt = f"""
 Explain clearly with example.
 
 Question:
@@ -293,28 +296,36 @@ Question:
 Answer:
 """
 
+            result = _llm(prompt)
+            answer = remove_repetition(result[0]["generated_text"].strip())
+
+            return {
+                "question": question,
+                "answer": answer,
+                "mode": "General-LLM"
+            }
+
+        # RAG MODE
+        prompt = build_rag_prompt(context_docs, question)
+
         result = _llm(prompt)
 
         answer = remove_repetition(result[0]["generated_text"].strip())
 
+        confidence = round(max_score, 2)
+
         return {
             "question": question,
             "answer": answer,
-            "mode": "General-LLM"
+            "confidence_score": confidence,
+            "mode": "RAG-PDF"
         }
 
-    # RAG MODE
-    prompt = build_rag_prompt(context_docs, question)
+    except Exception as e:
 
-    result = _llm(prompt)
+        print("ERROR IN RAG PIPELINE:", str(e))
 
-    answer = remove_repetition(result[0]["generated_text"].strip())
-
-    confidence = round(max_score, 2)
-
-    return {
-        "question": question,
-        "answer": answer,
-        "confidence_score": confidence,
-        "mode": "RAG-PDF"
-    }
+        return {
+            "answer": "Internal server error in RAG pipeline",
+            "error": str(e)
+        }
