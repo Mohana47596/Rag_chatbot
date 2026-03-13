@@ -79,7 +79,7 @@ def retrieve(query, top_k=3):
     retrieved_docs = [_documents[i] for i in top_indices]
     retrieved_scores = [float(similarities[i]) for i in top_indices]
 
-    return retrieved_docs, retrieved_scores retrieved_docs, retrieved_scores
+    return retrieved_docs, retrieved_scores
 
 
 # ==============================
